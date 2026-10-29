@@ -53,6 +53,18 @@ face.webp  # animation decoded directly by the DLL
 
 PNG and WebP dimensions may differ. Animation is fitted into the PNG canvas, centered with its aspect ratio preserved; transparent margins fill the remaining area. Resized frames are cached when RAM permits. A matching WebP takes precedence over APNG for that source; a lower-priority WebP cannot replace a higher-priority PNG override. Arbitrary cropped artwork is not automatically aligned. The PNG is one cover/layout image, not an animation frame sequence.
 
+### Animated general cards (campaign and battle)
+
+The integrated Workshop pack and updated companion DLL support PNG sequences, APNG and WebP on general unit cards. Use the original card paths under `ui/characters/…/stills/unitcards/`. Prepare `faces/` and `faces/large/` separately for their original paths and dimensions.
+
+- **APNG:** place it at the original `.png` card path.
+- **WebP:** retain a valid original-size PNG carrier and add a same-basename `.webp` beside it.
+- **PNG sequence:** use the existing `ui/` → `ui/vulcans_gift/animations/` mapping and `ani/originalname_000.png`, `_001.png` onward. Card sequences play at 24 fps.
+- Selection plays the animation **once**, then holds the **first frame**. Deselection resets to the first frame; reselection restarts playback. These rules override the native file loop count.
+- The original selection highlight is preserved. Cards without an animation retain their existing behavior. No per-character Lua registration is required.
+
+Update both the pack and DLL. Remove the development-only `!!!VulcansGift_Card_Observer.pack` if present; its runtime functionality is integrated into the main pack. Campaign lookup walks direct children to distinguish nested cards with the same ID. Battle playback uses a named engine timer, avoiding the library callback queue’s 50 ms look-ahead loop with 33 ms repeats.
+
 ### UI coverage
 
 The same native path is connected to character details, starting-faction selection (leader and noteworthy-character portraits), and the UI advisor portrait. Text, buttons and campaign map pins are outside the player traversal. Within one portrait part, animated norm/happy/angry alternatives are preferred over static alternatives.
@@ -61,7 +73,7 @@ The same native path is connected to character details, starting-faction selecti
 
 Encoded files are read directly from the active packs identified by the running game's actual command line. Excluded packs are respected; the tool does not guess an unrelated saved manager profile. PNG sequence lists are indexed too.
 
-There is no animation-count cap. Composed native frames are prepared in the background and retained in RAM when possible. The initial cache budget is 85% of available physical RAM after a 2 GiB reserve. Other sources use streaming playback. Native frame timings and loop counts are read from the file. Existing atlas descriptors are retained and the source region is bounds-checked before upload.
+There is no animation-count cap. Composed native frames are prepared in the background and retained in RAM when possible. The initial cache budget is 85% of available physical RAM after a 2 GiB reserve. Other sources use streaming playback. Native frame timings and loop counts are read from the file, except that unit cards enforce selection-triggered one-shot playback. Existing atlas descriptors are retained and the source region is bounds-checked before upload.
 
 Current compatibility: Windows x64; verified Steam game PE build `0x69ce4c84 / 0x4836000` (1.7.2.0); TKMM 0.6.8; official extender 0.46.0. A UTF-8 or UTF-16LE mod-list `.txt` argument is required. Currently uncompressed PFH5 image entries only. There is no fixed 64 MiB encoded-file limit. Pack bounds, address-space conversion and allocation failure are checked. Per-image dimension/frame limits remain 4096×4096 pixels and 10,000 frames. Native output is 8-bit/channel RGBA.
 
@@ -70,6 +82,10 @@ Current compatibility: Windows x64; verified Steam game PE build `0x69ce4c84 / 0
 Development testing observed APNG and WebP in character details, animation in faction selection, and APNG in the advisor. Advisor atlas uploads have runtime log evidence. These observations are not a claim that all nine format/UI combinations were separately benchmarked.
 
 Offline checks cover decoding/composition, restart and timings, cached-frame equality, atlas bounds/overflow, active-pack selection, PNG-to-native handover, UI scope, and legacy 24/30 fps timing. Public native unit tests generate their own fixture and do not require private mod artwork. No general FPS or turn-speed improvement is claimed.
+
+Campaign and battle WebP card playback was observed in-game before release cleanup, including selection transitions and first-frame hold. The cleaned release passes 21 Rust checks plus Lua card and timer regression checks. Its final combined pack/DLL still requires a post-cleanup in-game check; this does not imply that every format/UI combination was separately tested.
+
+Release builds remove the old pixel/address observation hook and suppress routine per-frame/selection logs. Startup and error reporting remain. Card Lua writes only failures to `vulcans_gift_errors.log`.
 
 ## Build
 
