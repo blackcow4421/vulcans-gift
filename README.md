@@ -51,7 +51,7 @@ face.png   # coordinate/cover image, including the expected placement metadata
 face.webp  # animation decoded directly by the DLL
 ```
 
-The effective PNG and WebP canvases must match. Mismatched siblings are skipped. A matching WebP takes precedence over APNG for that source; a lower-priority WebP cannot replace a higher-priority PNG override. Arbitrary cropped artwork is not automatically aligned. The PNG is one cover/layout image, not an animation frame sequence.
+PNG and WebP dimensions may differ. Animation is fitted into the PNG canvas, centered with its aspect ratio preserved; transparent margins fill the remaining area. Resized frames are cached when RAM permits. A matching WebP takes precedence over APNG for that source; a lower-priority WebP cannot replace a higher-priority PNG override. Arbitrary cropped artwork is not automatically aligned. The PNG is one cover/layout image, not an animation frame sequence.
 
 ### UI coverage
 
@@ -63,7 +63,7 @@ Encoded files are read directly from the active packs identified by the running 
 
 There is no animation-count cap. Composed native frames are prepared in the background and retained in RAM when possible. The initial cache budget is 85% of available physical RAM after a 2 GiB reserve. Other sources use streaming playback. Native frame timings and loop counts are read from the file. Existing atlas descriptors are retained and the source region is bounds-checked before upload.
 
-Current compatibility: Windows x64; verified Steam game PE build `0x69ce4c84 / 0x4836000` (1.7.2.0); TKMM 0.6.8; official extender 0.46.0. A UTF-8 or UTF-16LE mod-list `.txt` argument is required. Currently uncompressed PFH5 image entries only. Per-image validation limits remain 64 MiB encoded, 4096×4096 pixels, and 10,000 frames. Native output is 8-bit/channel RGBA.
+Current compatibility: Windows x64; verified Steam game PE build `0x69ce4c84 / 0x4836000` (1.7.2.0); TKMM 0.6.8; official extender 0.46.0. A UTF-8 or UTF-16LE mod-list `.txt` argument is required. Currently uncompressed PFH5 image entries only. There is no fixed 64 MiB encoded-file limit. Pack bounds, address-space conversion and allocation failure are checked. Per-image dimension/frame limits remain 4096×4096 pixels and 10,000 frames. Native output is 8-bit/channel RGBA.
 
 ## Validation
 
