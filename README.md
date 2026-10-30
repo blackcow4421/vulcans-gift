@@ -51,7 +51,7 @@ face.png   # coordinate/cover image, including the expected placement metadata
 face.webp  # animation decoded directly by the DLL
 ```
 
-PNG and WebP dimensions may differ. Animation is fitted into the PNG canvas, centered with its aspect ratio preserved; transparent margins fill the remaining area. Resized frames are cached when RAM permits. A matching WebP takes precedence over APNG for that source; a lower-priority WebP cannot replace a higher-priority PNG override. Arbitrary cropped artwork is not automatically aligned. The PNG is one cover/layout image, not an animation frame sequence.
+PNG and WebP dimensions may differ. Large-panel portraits preserve native pixel size when smaller than the PNG canvas, centered with transparent padding; oversized portraits are reduced to fit. Unit cards retain aspect-preserving fit-to-canvas scaling. Resized frames are cached when RAM permits. A matching WebP takes precedence over APNG for that source; a lower-priority WebP cannot replace a higher-priority PNG override. Arbitrary cropped artwork is not automatically aligned. The PNG is one cover/layout image, not an animation frame sequence.
 
 ### Animated general cards (campaign and battle)
 
@@ -64,6 +64,14 @@ The integrated Workshop pack and updated companion DLL support PNG sequences, AP
 - The original selection highlight is preserved. Cards without an animation retain their existing behavior. No per-character Lua registration is required.
 
 Update both the pack and DLL. Remove the development-only `!!!VulcansGift_Card_Observer.pack` if present; its runtime functionality is integrated into the main pack. Campaign lookup walks direct children to distinguish nested cards with the same ID. Battle playback uses a named engine timer, avoiding the library callback queue’s 50 ms look-ahead loop with 33 ms repeats.
+
+### Initial card upload and portrait sizing
+
+Native APNG/WebP cards substitute the decoded first frame during the carrier's initial GPU upload, rather than only overwriting the PNG afterward. Playback uploads bypass that substitution, so animation still advances normally. Card selection plays once and returns to frame zero; the original selection highlight is preserved.
+
+Small large_panel portraits retain their native pixel dimensions and are centered with transparent padding. Oversized portraits are reduced to fit. Faction selection using the same portrait asset shares this sizing policy. Unit cards retain their previous fit-to-canvas behavior.
+
+The user confirmed WebP campaign initial display and battle operation with the final DLL. All 27 native checks pass. APNG was not separately retested after the final upload change. The framework pack is unchanged; update the DLL only.
 
 ### UI coverage
 
@@ -83,9 +91,7 @@ Development testing observed APNG and WebP in character details, animation in fa
 
 Offline checks cover decoding/composition, restart and timings, cached-frame equality, atlas bounds/overflow, active-pack selection, PNG-to-native handover, UI scope, and legacy 24/30 fps timing. Public native unit tests generate their own fixture and do not require private mod artwork. No general FPS or turn-speed improvement is claimed.
 
-Campaign and battle WebP card playback was observed in-game before release cleanup, including selection transitions and first-frame hold. The cleaned release passes 21 Rust checks plus Lua card and timer regression checks. Its final combined pack/DLL still requires a post-cleanup in-game check; this does not imply that every format/UI combination was separately tested.
-
-Release builds remove the old pixel/address observation hook and suppress routine per-frame/selection logs. Startup and error reporting remain. Card Lua writes only failures to `vulcans_gift_errors.log`.
+The final DLL was confirmed in-game for WebP campaign card initial display without the PNG flash, selection playback and battle operation. All 27 native checks pass. APNG was not separately retested after the final shared upload change. The framework pack is unchanged by this DLL update. Release builds remove the old pixel/address observation hook and suppress routine per-frame/selection logs. Startup and error reporting remain. Card Lua writes only failures to `vulcans_gift_errors.log`.
 
 ## Build
 
